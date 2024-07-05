@@ -2,6 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { axiosInstance } from '../APICALLS';
 import Admin from './Admin';
+import { Tabs } from 'antd';
+import AdminOrder from './AdminOrder';
+const { TabPane } = Tabs;
 
 const Header = () => {
   const [user, setUser] = useState(null);
@@ -46,7 +49,10 @@ const Header = () => {
         </button>
       </header>
       <div style={{ marginTop: '120px' }}>
-        <Admin />
+      <Tabs  defaultActiveKey="1">
+       <TabPane tab='products' key='1'> <Admin/></TabPane>
+       <TabPane tab='orders' key='2'> <AdminOrder/></TabPane>
+       </Tabs>
       </div>
     </>
   );

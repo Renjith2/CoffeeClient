@@ -4,7 +4,7 @@ import React, { useEffect } from 'react';
 import { Modal, Form, Input, Button, message } from 'antd';
 import { addProducts, updateProduct } from '../APICALLS/products';
 
-const AddProductModal = ({ isModalVisible, handleCancel, editingProduct, productToEdit }) => {
+const AddProductModal = ({ isModalVisible, handleCancel, editingProduct, productToEdit, update,SetUpdate }) => {
   const [form] = Form.useForm();
 
   useEffect(() => {
@@ -22,8 +22,10 @@ const AddProductModal = ({ isModalVisible, handleCancel, editingProduct, product
       let response;
       if (editingProduct) {
         response = await updateProduct(productToEdit._id, values);
+        SetUpdate(true)
       } else {
         response = await addProducts(values);
+        SetUpdate(true)
       }
       if (response.success) {
         message.success(response.message);
@@ -81,6 +83,14 @@ const AddProductModal = ({ isModalVisible, handleCancel, editingProduct, product
         >
           <Input />
         </Form.Item>
+        <Form.Item
+          name="vendorname"
+          label="Vendor Name"
+          rules={[{ required: true, message: 'Please input the Vendor Name!' }]}
+        >
+          <Input />
+        </Form.Item>
+
         <Form.Item>
           <Button type="primary" htmlType="submit">
             {editingProduct ? "Update Product" : "Add Product"}

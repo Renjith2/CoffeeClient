@@ -1,12 +1,11 @@
 
 
 
-
-
 import React, { useState, useEffect } from 'react';
 import { Table, Button, message, Modal, Input } from 'antd';
 import AddProductModal from './AddProductModal';
 import { getProducts, deleteProduct, searchProducts } from '../APICALLS/products';
+import { axiosInstance } from '../APICALLS';
 
 const { confirm } = Modal;
 
@@ -15,17 +14,47 @@ const ProductTable = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [productToEdit, setProductToEdit] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [editingProduct,SeteditingProduct]=useState(false)
+  const [editingProduct, SetEditingProduct] = useState(false);
+  const [user, setUser] = useState(null);
+  const [filteredProducts, setFilteredProducts] = useState([]);
+  const [update, SetUpdate] = useState(false);
+  const [unsearch, setUnsearch] = useState(false);
+
+  useEffect(() => {
+    fetchUserData();
+  }, []);
 
   useEffect(() => {
     fetchProducts();
-  }, []);
+  }, [unsearch, update]); // Refetch products when unsearch or update changes
+
+  useEffect(() => {
+    if (user) {
+      fetchProducts();
+    }
+  }, [user, update]); // Refetch products when user or update changes
+
+  const fetchUserData = async () => {
+    try {
+      const response = await axiosInstance.get('/api/user/get-current-user');
+      if (response.data.success) {
+        setUser(response.data.data.name);
+      } else {
+        console.error(response.data.message);
+      }
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+    }
+  };
 
   const fetchProducts = async () => {
     try {
       const response = await getProducts();
       if (response.success) {
         setProducts(response.data);
+        // Filter products based on vendorname
+        const filtered = response.data.filter(order => order.vendorname === user);
+        setFilteredProducts(filtered);
       } else {
         message.error(response.message);
       }
@@ -40,14 +69,14 @@ const ProductTable = () => {
       const response = await searchProducts(searchQuery);
       if (response.success) {
         setProducts(response.data);
+        const filtered = response.data.filter(order => order.vendorname === user);
+        setFilteredProducts(filtered);
       } else {
         message.error(response.message);
       }
     } catch (error) {
       console.error('Error searching products:', error);
       message.error('Failed to search products');
-    } finally {
-      setSearchQuery(''); // Clear the search input field
     }
   };
 
@@ -72,22 +101,23 @@ const ProductTable = () => {
   };
 
   const handleEditProduct = (product) => {
-    console.log("Hi from edit product", product);
     setProductToEdit(product);
-    SeteditingProduct(true);
+    SetEditingProduct(true);
     setIsModalVisible(true);
   };
 
   const handleAddProductClick = () => {
     setProductToEdit(null);
-    SeteditingProduct(false);
+    SetEditingProduct(false);
     setIsModalVisible(true);
+    SetUpdate(false);
   };
 
   const handleCancel = () => {
+    setSearchQuery(''); // Clear search query
+    setUnsearch(true); // Trigger refetch of products
     setIsModalVisible(false);
-    SeteditingProduct(false);
-    fetchProducts(); // Fetch updated products list after closing the modal
+    SetEditingProduct(false);
   };
 
   const columns = [
@@ -117,6 +147,11 @@ const ProductTable = () => {
       key: 'availability',
     },
     {
+      title: 'Vendor Name',
+      dataIndex: 'vendorname',
+      key: 'vendorname',
+    },
+    {
       title: 'Actions',
       key: 'actions',
       render: (text, record) => (
@@ -139,6 +174,7 @@ const ProductTable = () => {
           onSearch={handleSearch}
           style={{ marginBottom: 16 }}
         />
+        <Button onClick={handleCancel}>Clear Search</Button>
         <Button type="primary" onClick={handleAddProductClick}>
           Add New Product
         </Button>
@@ -148,8 +184,10 @@ const ProductTable = () => {
         handleCancel={handleCancel}
         productToEdit={productToEdit}
         editingProduct={editingProduct}
+        update={update}
+        SetUpdate={SetUpdate}
       />
-      <Table columns={columns} dataSource={products}  />
+      <Table columns={columns} dataSource={filteredProducts} />
     </div>
   );
 };

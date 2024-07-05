@@ -1,0 +1,3 @@
+;/*FB_PKG_DELIM*/
+
+__d("CAAmWebQEHelper",["PolarisUA","qex"],(function(a,b,c,d,e,f,g){"use strict";function a(){var a;return!d("PolarisUA").isMobile()?!1:(a=c("qex")._("1531"))!=null?a:!1}g.isCAAMweb=a}),98);

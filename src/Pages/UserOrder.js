@@ -20,12 +20,47 @@ const UserOrder = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [editOrderId, setEditOrderId] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [user, setUser] = useState(null);
 
   // Fetch existing orders
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const response = await axiosInstance.get('/api/user/get-current-user');
+        console.log(response.data.data.name); // Debugging: Log the full response
+
+        if (response.data.success) {
+          setUser(response.data.data.name);
+          console.log(user);
+        } else {
+          console.error(response.data.message);
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      }
+    };
+
+    fetchUserData();
+  }, []);
+
   const fetchOrders = async () => {
     try {
       const response = await axiosInstance.get('/api/orders');
-      setOrders(response.data.data);
+      const orders = response.data.data;
+
+      // Filter orders where customerName matches the logged-in user
+      const filteredOrders = orders.filter(order => order.customerName === user);
+      console.log(filteredOrders);
+      console.log(orders);
+      console.log(user);
+
+      // Format the order date for each filtered order
+      const formattedOrders = filteredOrders.map(order => ({
+        ...order,
+        orderDate: moment(order.orderDate).format('YYYY-MM-DD'),
+      }));
+
+      setOrders(formattedOrders);
     } catch (error) {
       console.error('Error fetching orders:', error);
     }
@@ -34,16 +69,19 @@ const UserOrder = () => {
   const searchOrders = async (query) => {
     try {
       const response = await axiosInstance.get(`/api/orders/search?q=${query}`);
-      console.log(response.data)
+      console.log(response.data);
       setOrders(response.data.data);
     } catch (error) {
       console.error('Error searching orders:', error);
     }
   };
 
+  // Adjust the dependency array to include user and isModalVisible
   useEffect(() => {
-    fetchOrders();
-  }, [isModalVisible]); // Update dependency to refresh orders when modal visibility changes
+    if (user) {
+      fetchOrders();
+    }
+  }, [user, isModalVisible]);
 
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value);
@@ -51,6 +89,11 @@ const UserOrder = () => {
 
   const handleSearch = () => {
     searchOrders(searchQuery);
+  };
+
+  const handleClearSearch = () => {
+    setSearchQuery('');
+    fetchOrders(); // Refetch all orders
   };
 
   const handleModalCancel = () => {
@@ -114,7 +157,7 @@ const UserOrder = () => {
       productsOrdered: record.productsOrdered,
       quantity: record.quantity,
       totalPrice: record.totalPrice,
-      orderDate: record.orderDate ? moment(record.orderDate) : null,
+      orderDate: record.orderDate ? moment(record.orderDate).format('YYYY-MM-DD') : null,
       orderStatus: record.orderStatus,
     });
     setIsEditMode(true);
@@ -169,6 +212,11 @@ const UserOrder = () => {
       key: 'orderDate',
     },
     {
+      title: 'Vendor Name',
+      dataIndex: 'vendorName',
+      key: 'vendorName',
+    },
+    {
       title: 'Actions',
       key: 'actions',
       render: (text, record) => (
@@ -192,6 +240,9 @@ const UserOrder = () => {
         <Button type="primary" onClick={handleSearch} style={{ marginRight: '16px' }}>
           Search
         </Button>
+        <Button onClick={handleClearSearch} style={{ marginRight: '16px' }}>
+          Clear Search
+        </Button>
         <Button type="primary" onClick={handlePlaceOrder}>
           Place Order
         </Button>
@@ -205,9 +256,13 @@ const UserOrder = () => {
         onSubmit={handleModalSubmit}
         isEditMode={isEditMode}
         editOrderId={editOrderId}
+        setFormData={setFormData}
       />
     </>
   );
 };
 
 export default UserOrder;
+
+
+

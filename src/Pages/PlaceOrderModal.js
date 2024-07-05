@@ -7,15 +7,28 @@ import { addOrder, editOrder } from '../APICALLS/orders'; // Import the addOrder
 const { axiosInstance } = require('../APICALLS/index');
 const { Option } = Select;
 
-const PlaceOrderModal = ({ visible, onCancel, formData, onChange, onSubmit, isEditMode,editOrderId }) => {
+const PlaceOrderModal = ({ visible, onCancel, formData, onChange, onSubmit, isEditMode, editOrderId, setFormData }) => {
   const [products, setProducts] = useState([]);
+  const [productPrices, setProductPrices] = useState({});
+  const [productVendors, setProductVendors] = useState({});
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await axiosInstance.get('/api/products/search');
-        const productNames = response.data.data.map(item => item.name);
+        const response = await axiosInstance.get('/api/products');
+        const productData = response.data.data;
+        const productNames = productData.map(item => item.name);
+        const productPrices = productData.reduce((acc, item) => {
+          acc[item.name] = item.price;
+          return acc;
+        }, {});
+        const productVendors = productData.reduce((acc, item) => {
+          acc[item.name] = item.vendorname;
+          return acc;
+        }, {});
         setProducts(productNames);
+        setProductPrices(productPrices);
+        setProductVendors(productVendors);
       } catch (error) {
         console.error('Error fetching products:', error);
       }
@@ -24,11 +37,27 @@ const PlaceOrderModal = ({ visible, onCancel, formData, onChange, onSubmit, isEd
     fetchProducts();
   }, []);
 
+  const handleProductChange = (value) => {
+    setFormData({
+      ...formData,
+      productsOrdered: value,
+      totalPrice: productPrices[value] * formData.quantity, // Set total price based on selected product and quantity
+      vendorName: productVendors[value] // Set vendor name based on selected product
+    });
+  };
+
+  const handleQuantityChange = (value) => {
+    setFormData({
+      ...formData,
+      quantity: value,
+      totalPrice: productPrices[formData.productsOrdered] * value // Recalculate total price based on quantity
+    });
+  };
+
   const handleSubmit = async () => {
     try {
       // Add "In process" order status to formData before sending to the backend
       const updatedFormData = { ...formData, orderStatus: 'In process' };
-      console.log(formData._id)
       const response = await (isEditMode ? editOrder(editOrderId, updatedFormData) : addOrder(updatedFormData));
       if (response.success) {
         message.success(isEditMode ? 'Order updated successfully!' : 'Order placed successfully!');
@@ -68,7 +97,7 @@ const PlaceOrderModal = ({ visible, onCancel, formData, onChange, onSubmit, isEd
         <Select
           name="productsOrdered"
           value={formData.productsOrdered}
-          onChange={(value) => onChange({ target: { name: 'productsOrdered', value } })}
+          onChange={handleProductChange}
           style={{ width: '100%' }}
         >
           {products.map(product => (
@@ -80,17 +109,23 @@ const PlaceOrderModal = ({ visible, onCancel, formData, onChange, onSubmit, isEd
       </div>
       <div>
         <label>Quantity:</label>
-        <InputNumber name="quantity" value={formData.quantity} onChange={(value) => onChange({ target: { name: 'quantity', value } })} />
+        <InputNumber
+          name="quantity"
+          value={formData.quantity}
+          onChange={handleQuantityChange}
+          min={1}
+        />
       </div>
       <div>
         <label>Total Price:</label>
-        <InputNumber name="totalPrice" value={formData.totalPrice} onChange={(value) => onChange({ target: { name: 'totalPrice', value } })} />
+        <InputNumber name="totalPrice" value={formData.totalPrice} disabled />
       </div>
       <div>
         <label>Order Date:</label>
         <DatePicker
           name="orderDate"
           value={formData.orderDate ? moment(formData.orderDate) : null}
+          format="YYYY-MM-DD"
           onChange={handleDateChange}
         />
       </div>
@@ -99,6 +134,14 @@ const PlaceOrderModal = ({ visible, onCancel, formData, onChange, onSubmit, isEd
         <Input
           name="orderStatus"
           value="In process"
+          disabled
+        />
+      </div>
+      <div>
+        <label>Vendor Name:</label>
+        <Input
+          name="vendorName"
+          value={formData.vendorName}
           disabled
         />
       </div>

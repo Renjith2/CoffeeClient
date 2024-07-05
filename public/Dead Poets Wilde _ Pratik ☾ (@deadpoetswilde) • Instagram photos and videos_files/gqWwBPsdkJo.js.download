@@ -1,0 +1,3 @@
+;/*FB_PKG_DELIM*/
+
+__d("CAAFetaSavePasswordInterstitial.entrypoint",["CAAFetaSavePasswordInterstitialQuery$Parameters","JSResourceForInteraction"],(function(a,b,c,d,e,f,g){"use strict";a={getPreloadProps:function(){return{queries:{query:{parameters:c("CAAFetaSavePasswordInterstitialQuery$Parameters"),variables:{}}}}},root:c("JSResourceForInteraction")("CAAFetaSavePasswordInterstitialDialog.react").__setRef("CAAFetaSavePasswordInterstitial.entrypoint")};g["default"]=a}),98);
