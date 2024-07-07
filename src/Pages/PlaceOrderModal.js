@@ -1,16 +1,23 @@
 
 
 import React, { useEffect, useState } from 'react';
-import { Modal, Button, Input, InputNumber, DatePicker, Select, message } from 'antd';
+import { Modal, Button, Input, InputNumber, DatePicker, Select, message,user,setUser } from 'antd';
 import moment from 'moment';
 import { addOrder, editOrder } from '../APICALLS/orders'; // Import the addOrder function
 const { axiosInstance } = require('../APICALLS/index');
 const { Option } = Select;
 
-const PlaceOrderModal = ({ visible, onCancel, formData, onChange, onSubmit, isEditMode, editOrderId, setFormData }) => {
+const PlaceOrderModal = ({ visible, onCancel, formData, onChange, onSubmit, isEditMode, editOrderId, setFormData,user }) => {
   const [products, setProducts] = useState([]);
   const [productPrices, setProductPrices] = useState({});
   const [productVendors, setProductVendors] = useState({});
+
+  useEffect(() => {
+    setFormData(prevFormData => ({
+      ...prevFormData,
+      customerName: user
+    }));
+  }, [user, setFormData]);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -90,7 +97,7 @@ const PlaceOrderModal = ({ visible, onCancel, formData, onChange, onSubmit, isEd
     >
       <div>
         <label>Customer Name:</label>
-        <Input name="customerName" value={formData.customerName} onChange={onChange} />
+        <Input name="customerName" value={formData.customerName} disabled/>
       </div>
       <div>
         <label>Products Ordered:</label>

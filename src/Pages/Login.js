@@ -1,5 +1,6 @@
 
 
+
 import React, { useEffect, useState } from "react";
 import { validPassword, validEmail } from "./Validation";
 import { Link, useNavigate } from "react-router-dom";
@@ -24,22 +25,38 @@ function Login() {
 
   const fetchUserData = async () => {
     try {
-      console.log("first")
+      const token = localStorage.getItem('token');
+      if (!token) {
+        navigate('/login'); // Redirect to login if no token found
+        return;
+      }
+  
       const response = await axiosInstance.get('/api/user/get-current-user');
-      setUser(response.data);
-      console.log(response.data)
-      if (response.data.data.isAdmin) {
-        navigate('/home');
+      console.log(response); // Debugging: Log the full response
+  
+      if (response.data.success) {
+        setUser(response.data.data);
+        // Check user role and navigate accordingly
+        if (response.data.data.isAdmin) {
+          navigate('/home'); // Redirect to admin page if isAdmin
+        } else {
+          navigate('/user'); // Redirect to user page if not admin
+        }
       } else {
-        navigate('/user');
+        console.error(response.data.message);
+        // Handle error or redirect to login
+        navigate('/login');
       }
     } catch (error) {
       console.error('Error fetching user data:', error);
+      // Handle error or redirect to login
+      navigate('/login');
     }
   };
 
   useEffect(() => {
-    if (localStorage.getItem('token')) {
+    const token = localStorage.getItem('token');
+    if (token) {
       fetchUserData();
     }
   }, []); // Empty dependency array to run only once on component mount
@@ -126,3 +143,6 @@ function Login() {
 }
 
 export default Login;
+
+
+

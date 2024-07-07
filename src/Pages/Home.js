@@ -10,28 +10,45 @@ const Header = () => {
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const response = await axiosInstance.get('/api/user/get-current-user');
-        console.log(response); // Debugging: Log the full response
 
-        if (response.data.success) {
-          setUser(response.data.data);
-          console.log(user)
-        } else {
-          console.error(response.data.message);
-        }
-      } catch (error) {
-        console.error('Error fetching user data:', error);
+ useEffect(()=>{
+  const fetchUserData = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        navigate('/login'); // Redirect to login if no token found
+        return;
       }
-    };
-
-    fetchUserData();
-  }, []);
-
+  
+      const response = await axiosInstance.get('/api/user/get-current-user');
+      console.log(response); // Debugging: Log the full response
+  
+      if (response.data.success) {
+        const userData = response.data.data;
+        setUser(userData);
+        // Check user role and navigate accordingly
+        if (userData.isAdmin) {
+          navigate('/home'); // Redirect to admin page if isAdmin
+        } else {
+          navigate('/user'); // Redirect to user page if not admin
+        }
+      } else {
+        console.error(response.data.message);
+        // Handle error or redirect to login
+        navigate('/login');
+      }
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+      // Handle error or redirect to login
+      navigate('/login');
+    }
+  };
+  fetchUserData()
+ },[])
+   
   const handleLogout = () => {
     localStorage.removeItem('token');
+    setUser(null);
     navigate('/login');
   };
 

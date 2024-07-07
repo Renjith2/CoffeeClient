@@ -2,10 +2,11 @@ import './App.css';
 
 import React from 'react'
 import Register from './Pages/Register';
-import {BrowserRouter,Router,Route, Routes} from 'react-router-dom'
+import {BrowserRouter,Router,Route, Routes } from 'react-router-dom'
 import Login from './Pages/Login';
 import Home from './Pages/Home';
 import UserHome from './Pages/UserHome';
+
 
 function App() {
   return (

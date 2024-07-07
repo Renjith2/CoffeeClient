@@ -66,15 +66,19 @@ const UserOrder = () => {
     }
   };
 
-  const searchOrders = async (query) => {
+  
+
+  const searchOrders = async (query, user) => {
     try {
       const response = await axiosInstance.get(`/api/orders/search?q=${query}`);
-      console.log(response.data);
-      setOrders(response.data.data);
+      const filteredOrders = response.data.data.filter(order => order.customerName === user);
+      console.log(filteredOrders);
+      setOrders(filteredOrders);
     } catch (error) {
       console.error('Error searching orders:', error);
     }
   };
+  
 
   // Adjust the dependency array to include user and isModalVisible
   useEffect(() => {
@@ -88,7 +92,7 @@ const UserOrder = () => {
   };
 
   const handleSearch = () => {
-    searchOrders(searchQuery);
+    searchOrders(searchQuery,user);
   };
 
   const handleClearSearch = () => {
@@ -141,7 +145,7 @@ const UserOrder = () => {
 
   const handlePlaceOrder = () => {
     setFormData({
-      customerName: '',
+      customerName: user,
       productsOrdered: '',
       quantity: 1,
       totalPrice: 0,
@@ -257,6 +261,7 @@ const UserOrder = () => {
         isEditMode={isEditMode}
         editOrderId={editOrderId}
         setFormData={setFormData}
+        user={user}
       />
     </>
   );
